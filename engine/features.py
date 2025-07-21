@@ -4,6 +4,7 @@ from shlex import quote
 import struct
 import subprocess
 import time
+import openai
 from playsound import playsound
 import eel
 import pvporcupine
@@ -14,6 +15,9 @@ from engine.config import ASSISTANT_NAME
 import pywhatkit as kit
 import sqlite3
 import webbrowser
+
+from dotenv import load_dotenv
+
 
 from hugchat import hugchat
 
@@ -169,3 +173,39 @@ def whatsApp(mobile_no, message, flag, name):
 
     pyautogui.hotkey('enter')
     speak(jarvis_message)
+
+'''
+# chat bot 
+def chatBot(query):
+    user_input = query.lower()
+    chatbot = hugchat.ChatBot(cookie_path="engine\cookies.json")
+    id = chatbot.new_conversation()
+    chatbot.change_conversation(id)
+    response =  chatbot.chat(user_input)
+    print(response)
+    speak(response)
+    return response
+'''
+# Load variables from .env file
+load_dotenv()
+
+# Read API key from environment
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def chatBot(query):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # You can change to "gpt-4" if available
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": query}
+            ]
+        )
+        answer = response.choices[0].message.content.strip()
+        print("🤖", answer)
+        speak(answer)  # Uses your existing speak() function
+        return answer
+    except Exception as e:
+        print("❌ Error from OpenAI:", e)
+        return "Sorry, I couldn't process that right now."
+
